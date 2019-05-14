@@ -1,133 +1,76 @@
-## aspider
+<h1 align=center>
+<img src="https://raw.githubusercontent.com/howie6879/ruia/master/docs/images/logo.png" width='120px' height='120px'>
+</h1>
 
-[![travis](https://travis-ci.org/howie6879/aspider.svg?branch=master)](https://travis-ci.org/howie6879/aspider) [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/aspider.svg)](https://pypi.org/project/aspider/) [![license](https://img.shields.io/github/license/howie6879/aspider.svg)](https://github.com/howie6879/aspider)
+[![travis](https://travis-ci.org/howie6879/ruia.svg?branch=master)](https://travis-ci.org/howie6879/ruia) 
+[![codecov](https://codecov.io/gh/howie6879/ruia/branch/master/graph/badge.svg)](https://codecov.io/gh/howie6879/ruia)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/ruia.svg)](https://pypi.org/project/ruia/) 
+[![PyPI](https://img.shields.io/pypi/v/ruia.svg)](https://pypi.org/project/ruia/) 
+[![gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/howie6879_ruia/community)
 
-A lightweight,asynchronous micro-framework, written with `asyncio` and `aiohttp`, aims to make crawling url as convenient as possible.
+![](https://raw.githubusercontent.com/howie6879/ruia/master/docs/images/ruia_demo.png)
 
-### Installation
+## Overview
 
-``` shell
-pip install aspider
+Ruia is an async web scraping micro-framework, written with `asyncio` and `aiohttp`, 
+aims to make crawling url as convenient as possible.
 
-pip install git+https://github.com/howie6879/aspider
-```
+**Write less, run faster**:
 
-### Usage
+-   Documentation: [中文文档][doc_cn] |[documentation][doc_en]
+-   Organization: [python-ruia][Organization]
 
-#### Request & Response
+## Features
 
-We provide an easy way to `request` a url and return a friendly `response`:
+-   **Easy**: Declarative programming
+-   **Fast**: Powered by asyncio
+-   **Extensible**: Middlewares and plugins
+-   **Powerful**: JavaScript support
 
-``` python
-import asyncio
-
-from aspider import Request
-
-request = Request("https://news.ycombinator.com/")
-response = asyncio.get_event_loop().run_until_complete(request.fetch())
-
-# Output
-# [2018-07-25 11:23:42,620]-Request-INFO  <GET: https://news.ycombinator.com/>
-# <Response url[text]: https://news.ycombinator.com/ status:200 metadata:{}>
-```
-
-**JavaScript Support**:
-
-``` python
-request = Request("https://www.jianshu.com/", load_js=True)
-response = asyncio.get_event_loop().run_until_complete(request.fetch())
-print(response.body)
-```
-
-Note, when you ever run the `fetch()` method first time,, it will download a recent version of Chromium (~100MB). This only happens once.
-
-#### Item
-
-Let's take a look at a quick example of using `Item` to extract target data. Start off by adding the following to your demo.py:
-
-``` python
-import asyncio
-
-from aspider import AttrField, TextField, Item
-
-
-class HackerNewsItem(Item):
-    target_item = TextField(css_select='tr.athing')
-    title = TextField(css_select='a.storylink')
-    url = AttrField(css_select='a.storylink', attr='href')
-
-    async def clean_title(self, value):
-        return value
-
-
-items = asyncio.get_event_loop().run_until_complete(HackerNewsItem.get_items(url="https://news.ycombinator.com/"))
-for item in items:
-    print(item.title, item.url)
-```
-
-Run: `python demo.py`
+## Installation
 
 ``` shell
-Notorious ‘Hijack Factory’ Shunned from Web https://krebsonsecurity.com/2018/07/notorious-hijack-factory-shunned-from-web/
- ......
+# For Linux & Mac
+pip install -U ruia[uvloop]
+
+# For Windows
+pip install -U ruia
+
+# New features
+pip install git+https://github.com/howie6879/ruia
 ```
 
-#### Spider
+## Tutorials
 
-For multiple pages, you can solve this with `Spider`
-
-Create `hacker_news_spider.py`:
-
-``` python
-import aiofiles
-
-from aspider import AttrField, TextField, Item, Spider
-
-
-class HackerNewsItem(Item):
-    target_item = TextField(css_select='tr.athing')
-    title = TextField(css_select='a.storylink')
-    url = AttrField(css_select='a.storylink', attr='href')
-
-    async def clean_title(self, value):
-        return value
+1.  [Overview](https://docs.python-ruia.org/en/tutorials/overview.html)
+2.  [Installation](https://docs.python-ruia.org/en/tutorials/installation.html)
+3.  [Define Data Items](https://docs.python-ruia.org/en/tutorials/item.html)
+4.  [Spider Control](https://docs.python-ruia.org/en/tutorials/spider.html)
+5.  [Request & Response](https://docs.python-ruia.org/en/tutorials/request.html)
+6.  [Customize Middleware](https://docs.python-ruia.org/en/tutorials/middleware.html)
+7.  [Write a Plugins](https://docs.python-ruia.org/en/tutorials/plugins.html)
 
 
-class HackerNewsSpider(Spider):
-    start_urls = ['https://news.ycombinator.com/', 'https://news.ycombinator.com/news?p=2']
+## TODO
 
-    async def parse(self, res):
-        items = await HackerNewsItem.get_items(html=res.body)
-        for item in items:
-            async with aiofiles.open('./hacker_news.txt', 'a') as f:
-                await f.write(item.title + '\n')
+-   Cache for debug, to decreasing request limitation
+-   Distributed crawling/scraping
 
+## Contribution
 
-if __name__ == '__main__':
-    HackerNewsSpider.start()
-```
+Ruia is still under developing, feel free to open issues and pull requests:
 
-Run `hacker_news_spider.py`:
+-   Report or fix bugs
+-   Require or publish plugins
+-   Write or fix documentation
+-   Add test cases
 
-``` shell
-[2018-07-11 17:50:12,430]-aspider-INFO  Spider started!
-[2018-07-11 17:50:12,430]-Request-INFO  <GET: https://news.ycombinator.com/>
-[2018-07-11 17:50:12,456]-Request-INFO  <GET: https://news.ycombinator.com/news?p=2>
-[2018-07-11 17:50:14,785]-aspider-INFO  Time usage: 0:00:02.355062
-[2018-07-11 17:50:14,785]-aspider-INFO  Spider finished!
-```
+## Thanks
 
-### TODO
+-   [aiohttp](https://github.com/aio-libs/aiohttp/)
+-   [demiurge](https://github.com/matiasb/demiurge)
 
-- [ ] Custom middleware
-- [x] JavaScript support
-- [x] Friendly response
-
-### Contribution
-
-- Pull Request
-- Open Issue
-
-### Thanks
-
-- [demiurge](https://github.com/matiasb/demiurge)
+[doc_cn]: https://github.com/howie6879/ruia/blob/master/docs/cn/README.md
+[doc_en]: https://docs.python-ruia.org/
+[Awesome]: https://github.com/python-ruia/awesome-ruia
+[Organization]: https://github.com/python-ruia
